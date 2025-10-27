@@ -39,7 +39,7 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
-            <version>1.18.42</version>
+            <version>1.18.40</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -66,6 +66,12 @@
             <artifactId>dashscope-sdk-java</artifactId>
             <!-- 请将 'the-latest-version' 替换为最新版本号：https://mvnrepository.com/artifact/com.alibaba/dashscope-sdk-java -->
             <version>2.21.11</version>
+            <!--<exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
+            </exclusions>-->
         </dependency>
         <!-- Spring Ai alibaba-->
         <dependency>
@@ -73,16 +79,23 @@
             <artifactId>spring-ai-alibaba-starter</artifactId>
             <version>1.0.0-M6.1</version>
             <exclusions>
-                <exclusion>
+                <!--<exclusion>
                     <artifactId>logback-classic</artifactId>
                     <groupId>ch.qos.logback</groupId>
-                </exclusion>
+                </exclusion>-->
                 <exclusion>
                     <groupId>com.alibaba.cloud</groupId>
                     <artifactId>spring-alibaba-nacos-config</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <dependency>
+            <groupId>com.github.victools</groupId>
+            <artifactId>jsonschema-generator</artifactId>
+            <version>4.38.0</version>
+        </dependency>
+
 
     </dependencies>
 
