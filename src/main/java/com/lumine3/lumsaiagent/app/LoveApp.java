@@ -1,7 +1,9 @@
 package com.lumine3.lumsaiagent.app;
 
 import com.lumine3.lumsaiagent.advisor.MyLoggerAdvisor;
+import com.lumine3.lumsaiagent.advisor.ProhibitedWordsCheckAdvisor;
 import com.lumine3.lumsaiagent.advisor.ReReadingAdvisor;
+import com.lumine3.lumsaiagent.chatmemory.FileBasedChatMemory;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,12 +51,28 @@ public class LoveApp {
         /**
          * 对话记忆, 基于内存实现
          */
-        ChatMemory chatMemory = new InMemoryChatMemory();
+        /*ChatMemory chatMemory = new InMemoryChatMemory();
         chatClient = ChatClient.builder(dashscopeChatModel)
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(
                         //Advisor的几种分类
                         new MessageChatMemoryAdvisor(chatMemory),
+                        new MyLoggerAdvisor()*//*,//自定义日志advisor
+                        new ReReadingAdvisor()*//* // 自定义推理增强advisor
+                )
+                .build();*/
+        /**
+         * 会话记忆, 基于我们设置的文件会话记忆来实现
+         */
+        //创建临时文件路径
+        String fileDir = System.getProperty("user.dir") + "/tmp/chat-memory";
+        ChatMemory chatMemoryByFile = new FileBasedChatMemory(fileDir);
+        chatClient = ChatClient.builder(dashscopeChatModel)
+                .defaultSystem(SYSTEM_PROMPT)
+                .defaultAdvisors(
+                        //Advisor的几种分类
+                        new MessageChatMemoryAdvisor(chatMemoryByFile),
+                       /* new ProhibitedWordsCheckAdvisor(),*/ //自定义的敏感词拦截advisor
                         new MyLoggerAdvisor()/*,//自定义日志advisor
                         new ReReadingAdvisor()*/ // 自定义推理增强advisor
                 )
@@ -83,12 +101,13 @@ public class LoveApp {
     }
 
     /**
-     * record 生成一个类
+     * record 生成一个类 演示结构化输出
      */
     record LoveReport(String tittle, List<String> suggestions){}
 
     /**
      * 生成一个报告 , 演示结构化输出
+     * 输出的结果以我们上面设置的record类输出
      * @return
      */
     public LoveReport doChatWithReport(String msg , String chatId){
@@ -105,4 +124,7 @@ public class LoveApp {
         log.info("report : {} ", report);
         return report;
     }
+
+
+
 }

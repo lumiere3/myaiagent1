@@ -14,11 +14,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 一个基于文件的持久化方案
+ *
+ */
 public class FileBasedChatMemory implements ChatMemory {
 
-    //
+    //自定义一个用户的保存路径
     private final String BASE_DIR;
 
+    // java序列化工具
     private static final Kryo kryo = new Kryo();
 
     //实例化策略
@@ -31,25 +36,65 @@ public class FileBasedChatMemory implements ChatMemory {
     public FileBasedChatMemory(String dir) {
         this.BASE_DIR = dir;
         File baseDir = new File(dir);
-        if (!baseDir.exists()) {
+        if (!baseDir.exists()) { //判断文件是否存在, 如果不存在就创建一个文件
             baseDir.mkdirs();
         }
     }
 
 
+    /**
+     * 保存单条消息
+     * @param conversationId
+     * @param messages
+     */
+    /*@Override
+    public void add(String conversationId, Message messages) {
+        saveConversation(conversationId , List.of(messages));
+    }
+*/
+    /**
+     * 保存消息到文件
+     * @param conversationId
+     * @param messages
+     */
     @Override
-    public void add(String conversationId, List<Message> messages) {
-
+    public void add(String conversationId, List <Message> messages) {
+        // 1.获取以前的会话集合
+        List<Message> messageList = getOrCreateConversation(conversationId);
+        // 2.修改集合, 把当前message加入
+        messageList.addAll(messages);
+        // 3.保存集合
+        saveConversation(conversationId , messageList);
     }
 
+    /**
+     * 获取文件里面的最后n条消息
+     * @param conversationId
+     * @param lastN
+     * @return
+     */
     @Override
     public List<Message> get(String conversationId, int lastN) {
-        return List.of();
+        //1. 获取全部消息
+        List<Message> messageList = getOrCreateConversation(conversationId);
+        // 2.得到最后的n条消息, 用lamda表达式, 跳过前size - n 个
+        return messageList.stream()
+                .skip(Math.max(messageList.size() - lastN, 0))
+                .toList();
     }
 
+    /**
+     * 删除会话
+     * @param conversationId
+     */
     @Override
     public void clear(String conversationId) {
-
+        // 获取文件
+        File file = getConversationFile(conversationId);
+        //如果存在就删掉
+        if (file.exists()) {
+            file.delete();
+        }
     }
 
 
@@ -86,7 +131,7 @@ public class FileBasedChatMemory implements ChatMemory {
 
 
     /**
-     * 每个会话按照id单独保存会话
+     * 每个会话按照id单独保存会话以 (会话id + .kryo) 为文件名
      * @param conversationId
      * @return
      */

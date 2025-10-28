@@ -20,7 +20,7 @@ class LoveAppTest {
         String chatId = UUID.randomUUID().toString();
         // 构造多轮对话, 我们的对话应该是可以记住以前的对话的
         //1. 第一轮对话
-        String msg1 = "你好,我是名字是牢乔!";
+        String msg1 = "你好,我是名字是政治!";
         String ans1 = loveApp.doChat(msg1,chatId);
         //2. 第二轮对话
         String msg2 = "我想让我的另一半(BB)更爱我";

@@ -9,6 +9,8 @@ import reactor.core.publisher.Flux;
  * 自定义advisor
  * 自定义日志advisor 输出info级别的日志
  * 只输出单次用户提示词和 AI 回复的文本
+ * 因为SpringAI 内置的一个日志的拦截器输出debug级别的日志, 而Spring Boot默认是info 所以会看不到
+ * 因此我们自定义advisor来输出info级别的日志
  */
 @Slf4j
 public class MyLoggerAdvisor implements CallAroundAdvisor, StreamAroundAdvisor {
