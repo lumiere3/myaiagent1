@@ -1,19 +1,19 @@
 package com.lumine3.lumsaiagent.app;
 
 import com.lumine3.lumsaiagent.advisor.MyLoggerAdvisor;
-import com.lumine3.lumsaiagent.advisor.ProhibitedWordsCheckAdvisor;
 import com.lumine3.lumsaiagent.advisor.ReReadingAdvisor;
-import com.lumine3.lumsaiagent.chatmemory.FileBasedChatMemory;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
+import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
-import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -34,6 +34,12 @@ public class LoveApp {
     private final ChatClient chatClient;
 
     /**
+     * 用于启动知识库
+     */
+    @Resource
+    private VectorStore loveAppVectorStore;
+
+    /**
      * 系统提示词
      */
     private static final String SYSTEM_PROMPT = "扮演深耕恋爱心理领域的专家。" +
@@ -41,30 +47,33 @@ public class LoveApp {
             "单身状态询问社交圈拓展及追求心仪对象的困扰；恋爱状态询问沟通、习惯差异引发的矛盾；" +
             "已婚状态询问家庭责任与亲属关系处理的问题。" +
             "引导用户详述事情经过、对方反应及自身想法，以便给出专属解决方案。\n";
+    @Resource
+    private Advisor loveAppRagCloudAdvisor;
+    /*private final VectorStore loveAppVectorStore;*/
 
 
     /**
      * 初始化app
      * @param dashscopeChatModel
      */
-    public LoveApp(ChatModel dashscopeChatModel) {
+    public LoveApp(ChatModel dashscopeChatModel, VectorStore loveAppVectorStore) {
         /**
          * 对话记忆, 基于内存实现
          */
-        /*ChatMemory chatMemory = new InMemoryChatMemory();
+        ChatMemory chatMemory = new InMemoryChatMemory();
         chatClient = ChatClient.builder(dashscopeChatModel)
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(
                         //Advisor的几种分类
                         new MessageChatMemoryAdvisor(chatMemory),
-                        new MyLoggerAdvisor()*//*,//自定义日志advisor
-                        new ReReadingAdvisor()*//* // 自定义推理增强advisor
+                        new MyLoggerAdvisor(),//自定义日志advisor
+                        new ReReadingAdvisor() // 自定义推理增强advisor
                 )
-                .build();*/
+                .build();
         /**
          * 会话记忆, 基于我们设置的文件会话记忆来实现
          */
-        //创建临时文件路径
+       /* //创建临时文件路径
         String fileDir = System.getProperty("user.dir") + "/tmp/chat-memory";
         ChatMemory chatMemoryByFile = new FileBasedChatMemory(fileDir);
         chatClient = ChatClient.builder(dashscopeChatModel)
@@ -72,11 +81,12 @@ public class LoveApp {
                 .defaultAdvisors(
                         //Advisor的几种分类
                         new MessageChatMemoryAdvisor(chatMemoryByFile),
-                       /* new ProhibitedWordsCheckAdvisor(),*/ //自定义的敏感词拦截advisor
-                        new MyLoggerAdvisor()/*,//自定义日志advisor
-                        new ReReadingAdvisor()*/ // 自定义推理增强advisor
+                       *//* new ProhibitedWordsCheckAdvisor(),*//* //自定义的敏感词拦截advisor
+                        new MyLoggerAdvisor()*//*,//自定义日志advisor
+                        new ReReadingAdvisor()*//* // 自定义推理增强advisor
                 )
                 .build();
+        this.loveAppVectorStore = loveAppVectorStore;*/
     }
 
     /**
@@ -124,6 +134,38 @@ public class LoveApp {
         log.info("report : {} ", report);
         return report;
     }
+
+
+    /**
+     * rag的对话方法
+     * @param msg
+     * @param chatId
+     * @return
+     */
+
+
+    public String doChatWithGag(String msg , String chatId){
+        ChatResponse chatResponse =
+                chatClient
+                        .prompt()
+                        .user(msg)
+                        .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
+                                .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
+                        //开启一个自定义的日志, 便于观察
+                        .advisors(new MyLoggerAdvisor())
+                        // 开启问答拦截器, 调用知识库进行回答
+                        //.advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
+                        // 引用RAG检索增强服务 基于云知识库
+                        .advisors(loveAppRagCloudAdvisor)
+                        .call()
+                        .chatResponse();
+        //获取结果
+        String content = chatResponse.getResult().getOutput().getText();
+        log.info("content,  {} ", content);
+        return content;
+    }
+
+
 
 
 

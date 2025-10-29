@@ -43,4 +43,14 @@ class LoveAppTest {
         String msg1 = "你好,我是名字是牢乔! 我现在和aa有一些小问题, 你能给我一些建议吗?";
         LoveApp.LoveReport ans = loveApp.doChatWithReport(msg1,chatId);
     }
+
+    @Test
+    void doChatWithGag() {
+        // 构造一个对话id
+        String chatId = UUID.randomUUID().toString();
+        // 构造多轮对话, 我们的对话应该是可以记住以前的对话的
+        //1. 第一轮对话
+        String msg1 = "你好,我是名字是牢乔! 目前单身,感觉自己魅力不足,你能给我一些建议吗?";
+        String ans = loveApp.doChatWithGag(msg1,chatId);
+    }
 }
